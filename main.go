@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
+	"flag"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -51,18 +54,32 @@ func next(str string) string {
 }
 
 // Matches hash of sequence to the given hash, if they don't match the function tries to match the next sequence and so on...
-func crack(hash string) {
+func crack(hash string, verbose bool) {
 	var sequence string
 	var bytes [32]byte // Had to declare this variable to be able to compare both hashes
-	for hex.EncodeToString(bytes[:]) != hash {
-		sequence = next(sequence)
-		bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
+	if (verbose) {
+		for hex.EncodeToString(bytes[:]) != hash {
+			sequence = next(sequence)
+			fmt.Println(sequence)
+			bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
+		}
+	} else {
+		for hex.EncodeToString(bytes[:]) != hash {
+			sequence = next(sequence)
+			bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
+		}
+		fmt.Println(sequence) // If the hashes match, it prints the sequence to the terminal
 	}
-	fmt.Println(sequence) // If the hashes match, it prints the sequence to the terminal
 }
 
 func main() {
+	verbosePtr := flag.Bool("verbose", false, "set to true if you want command line output")
+	flag.Parse()
 	allowedChars = getChars("LUDC")
-	crack("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08") 
+	fmt.Print("Enter hash: ") // Writes "Enter hash: " to the command line and waits for input
+	reader := bufio.NewReader(os.Stdin)
+    hash, _ := reader.ReadString('\n') // Waits for \n character
+    hash = strings.Replace(hash, "\n", "", -1) // Replace "\n" character with ""
+	crack(hash, *verbosePtr) // Calls crack function
 }
 

@@ -54,18 +54,20 @@ func next(str string) string {
 }
 
 // Matches hash of sequence to the given hash, if they don't match the function tries to match the next sequence and so on...
-func crack(hash string, verbose bool) {
-	var sequence string
+func crack(startingSequence string, hash string, verbose bool) {
+	var sequence = startingSequence
 	var bytes [32]byte // Had to declare this variable to be able to compare both hashes
 	if (verbose) {
+		bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
 		for hex.EncodeToString(bytes[:]) != hash {
-			sequence = next(sequence)
+			sequence = next(next(next(next(sequence))))
 			fmt.Println(sequence)
 			bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
 		}
 	} else {
+		bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
 		for hex.EncodeToString(bytes[:]) != hash {
-			sequence = next(sequence)
+			sequence = next(next(next(next(sequence))))
 			bytes = sha256.Sum256([]byte(sequence)) // Assigns the SHA256 sum of the sequence to the bytes variable
 		}
 		fmt.Println(sequence) // If the hashes match, it prints the sequence to the terminal
@@ -75,11 +77,18 @@ func crack(hash string, verbose bool) {
 func main() {
 	verbosePtr := flag.Bool("verbose", false, "set to true if you want command line output")
 	flag.Parse()
+
 	allowedChars = getChars("LUDC")
+
 	fmt.Print("Enter hash: ") // Writes "Enter hash: " to the command line and waits for input
 	reader := bufio.NewReader(os.Stdin)
     hash, _ := reader.ReadString('\n') // Waits for \n character
     hash = strings.Replace(hash, "\n", "", -1) // Replace "\n" character with ""
-	crack(hash, *verbosePtr) // Calls crack function
+
+	var sequence string
+	go crack(next(sequence), hash, *verbosePtr) // Calls crack function
+	go crack(next(next(sequence)), hash, *verbosePtr) // Calls crack function
+	go crack(next(next(next(sequence))), hash, *verbosePtr) // Calls crack function
+	crack(next(next(next(next(sequence)))), hash, *verbosePtr) // Calls crack function
 }
 

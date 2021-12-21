@@ -57,7 +57,7 @@ func next(str string) string {
 func worker(sequence string, jobs <-chan string, results chan<- string) {
 	results <- next(sequence)
 	for true { // Checks to see if jobs = finished
-		results <- next(next(next(next(next(<-jobs))))) // Sends next sequence on results channel
+		results <- next(next(next(next(next(next(next(next(next(<-jobs))))))))) // Sends next sequence on results channel
 	}
 }
 
@@ -80,7 +80,7 @@ func main() {
 	results := make(chan string, 4)
 
 	// Creating workers
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 8; i++ {
 		go worker(sequence, jobs, results)
 		sequence = next(sequence)
 	}

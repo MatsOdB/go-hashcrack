@@ -54,16 +54,47 @@ func next(str string) string {
 }
 
 // Gets sequence from jobs channel and returns the next sequence on the results channel
-func worker(sequence string, jobs <-chan string, results chan<- string) {
-	results <- next(sequence)
-	for true { // Checks to see if jobs = finished
-		results <- next(next(next(next(next(next(next(next(next(<-jobs))))))))) // Sends next sequence on results channel
+func worker(workerId int, workerAmt *int, verbose bool, hash *string, result chan<- string) {
+	// Declaring necessary variables
+	var bytes [32]byte
+	var sequence string 
+
+	// Initializing sequence variable
+	for i := 0; i < workerId + 1; i++ {
+		sequence = next(sequence)
 	}
+
+	if (verbose) { // Checks for verbose flag
+		for { 
+			fmt.Println(sequence) // Prints every generated sequence
+			bytes = sha256.Sum256([]byte(sequence)) // Assign SHA256 sum of sequence to bytes variable
+			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
+				break
+			}
+			for i := 0; i < *workerAmt + 1; i++ { // Generates the (workerAmt + 1st) next sequence
+				sequence = next(sequence)
+			}
+		}
+	} else {
+		for { 
+			bytes = sha256.Sum256([]byte(sequence)) // Assign SHA256 sum of sequence to bytes variable
+			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
+				break
+			}
+			for i := 0; i < *workerAmt + 1; i++ { // Generates the (workerAmt + 1st) next sequence
+				sequence = next(sequence)
+			}
+		}
+	}
+
+	result <- sequence
+
+	close(result)
 }
 
 func main() {
 	verbosePtr := flag.Bool("verbose", false, "set to true if you want command line output")
-	flag.Parse()
+	flag.Parse() // Checks for verbose flags and relays info to workers when program starts
 
 	allowedChars = getChars("LUDC")
 
@@ -72,35 +103,18 @@ func main() {
     hash, _ := reader.ReadString('\n') // Waits for \n character
     hash = strings.Replace(hash, "\n", "", -1) // Replace "\n" character with ""
 
-	var sequence string
-	var bytes [32]byte
+	// Declares the amount of workers
+	var workers int = 8
 
 	// Creating channels
-	jobs := make(chan string, 4)
-	results := make(chan string, 4)
+	result := make(chan string, 1)
 
 	// Creating workers
-	for i := 0; i < 8; i++ {
-		go worker(sequence, jobs, results)
-		sequence = next(sequence)
+	for i := 0; i < workers; i++ {
+		go worker(i, &workers, *verbosePtr, &hash, result)
 	}
-
-	// Checks for verbose flag
-	if (*verbosePtr) {
-		for hex.EncodeToString(bytes[:]) != hash { // Checks to see if hashes match
-			sequence = <-results
-			bytes = sha256.Sum256([]byte(sequence))
-			fmt.Println(sequence) // Prints everything out to the command line
-			jobs <- sequence
-		}
-	} else {
-		for hex.EncodeToString(bytes[:]) != hash { // Checks to see if hashes match
-			sequence = <-results
-			bytes = sha256.Sum256([]byte(sequence))
-			jobs <- sequence
-		}
-	}
-	close(jobs) // Closes jobs channel
-	fmt.Println(sequence) // Prints the result to the command line
+	
+	// Prints result to terminal
+	fmt.Println("Cracked hash with: " + <-result)
 }
 

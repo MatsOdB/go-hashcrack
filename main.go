@@ -119,6 +119,6 @@ func main() {
 	
 	// Prints results to terminal
 	fmt.Println("Cracked hash with: " + <-result)
-	fmt.Println("Performed", calculations, "to crack hash")
+	fmt.Println("Performed", calculations, "calculations to crack hash")
 }
 

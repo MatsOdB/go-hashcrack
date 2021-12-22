@@ -104,7 +104,7 @@ func main() {
     hash = strings.Replace(hash, "\n", "", -1) // Replace "\n" character with ""
 
 	// Declares the amount of workers
-	var workers int = 8
+	var workers int = 2
 
 	// Creating channels
 	result := make(chan string, 1)

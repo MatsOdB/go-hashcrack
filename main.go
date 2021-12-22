@@ -18,6 +18,7 @@ const chars = "\"'|@#&-!;,?.:/%[]{}()<>\\~=+*_$ "
 
 // Declaring variable
 var allowedChars string
+var calculations int
 
 // Returns a listOfChars that contains all of the allowed characters.
 // For example: getChars("LUDC"), returns string with all lowercase letters, uppercase letters, digits and other characters
@@ -66,6 +67,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 
 	if (verbose) { // Checks for verbose flag
 		for { 
+			calculations += 1 // Adds 1 to calculations variable 
 			fmt.Println(sequence) // Prints every generated sequence
 			bytes = sha256.Sum256([]byte(sequence)) // Assign SHA256 sum of sequence to bytes variable
 			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
@@ -77,6 +79,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 		}
 	} else {
 		for { 
+			calculations += 1 // Adds 1 to calculations variable
 			bytes = sha256.Sum256([]byte(sequence)) // Assign SHA256 sum of sequence to bytes variable
 			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
 				break
@@ -114,7 +117,8 @@ func main() {
 		go worker(i, &workers, *verbosePtr, &hash, result)
 	}
 	
-	// Prints result to terminal
+	// Prints results to terminal
 	fmt.Println("Cracked hash with: " + <-result)
+	fmt.Println("Performed", calculations, "to crack hash")
 }
 

@@ -39,15 +39,15 @@ func getChars(charPattern string) string {
 	return listOfChars
 }
 
-// Returns the next sequence based on the given sequence
-func next(str string) string {
+// Returns the i-th next sequence based on the given sequence
+func next(str string, i int) string {
 	if (len(str) <= 0) {
 		str += string(allowedChars[0])
 	} else {
-		str = str[:0] + string(allowedChars[(strings.Index(allowedChars, string(str[0])) + 1 ) % len(allowedChars)]) + str [1:] // Increases the first character of the string by 1
+		str = str[:0] + string(allowedChars[(strings.Index(allowedChars, string(str[0])) + i ) % len(allowedChars)]) + str [1:] // Increases the first character of the string by 1
 		if (strings.Index(allowedChars, string(str[0])) == 0) { // Checks if the character is equal to the first character of the allowedChars string
 			ret := string(str[0]) // Stores the first value of the string
-			nxt := next(str[1:]) // Preforms the next function on a slice of the full string
+			nxt := next(str[1:], 1) // Preforms the next function on a slice of the full string
 			return ret + nxt // Returns the first value of current string + the next sequence of the sliced off part of the full string
 		}
 	}
@@ -61,9 +61,8 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 	var sequence string 
 
 	// Initializing sequence variable
-	for i := 0; i < workerId + 1; i++ {
-		sequence = next(sequence)
-	}
+	sequence = next(sequence, workerId + 1)
+
 
 	if (verbose) { // Checks for verbose flag
 		for { 
@@ -73,9 +72,8 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
 				break
 			}
-			for i := 0; i < *workerAmt + 1; i++ { // Generates the (workerAmt + 1st) next sequence
-				sequence = next(sequence)
-			}
+			// Generates the (workerAmt + 1st) next sequence
+			sequence = next(sequence, *workerAmt + 1)
 		}
 	} else {
 		for { 
@@ -84,9 +82,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
 				break
 			}
-			for i := 0; i < *workerAmt + 1; i++ { // Generates the (workerAmt + 1st) next sequence
-				sequence = next(sequence)
-			}
+			sequence = next(sequence, *workerAmt + 1)
 		}
 	}
 

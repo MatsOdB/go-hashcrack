@@ -72,8 +72,8 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
 				break
 			}
-			// Generates the (workerAmt + 1st) next sequence
-			sequence = next(sequence, *workerAmt + 1)
+			// Generates the workerAmt-th next sequence
+			sequence = next(sequence, *workerAmt)
 		}
 	} else {
 		for { 
@@ -82,7 +82,8 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
 				break
 			}
-			sequence = next(sequence, *workerAmt + 1)
+			// Generates the workerAmt-th next sequence
+			sequence = next(sequence, *workerAmt)
 		}
 	}
 

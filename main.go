@@ -73,7 +73,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 				break
 			}
 			// Generates the workerAmt-th next sequence
-			sequence = next(sequence, *workerAmt)
+			sequence = next(sequence, *workerAmt + 1)
 		}
 	} else {
 		for { 
@@ -83,7 +83,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 				break
 			}
 			// Generates the workerAmt-th next sequence
-			sequence = next(sequence, *workerAmt)
+			sequence = next(sequence, *workerAmt + 1)
 		}
 	}
 

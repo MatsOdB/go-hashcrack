@@ -73,7 +73,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 				break
 			}
 			// Generates the workerAmt-th next sequence
-			sequence = next(sequence, *workerAmt + 1)
+			sequence = next(sequence, *workerAmt)
 		}
 	} else {
 		for { 
@@ -83,10 +83,11 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 				break
 			}
 			// Generates the workerAmt-th next sequence
-			sequence = next(sequence, *workerAmt + 1)
+			sequence = next(sequence, *workerAmt)
 		}
 	}
 
+	// Print result to terminal
 	result <- sequence
 
 	close(result)
@@ -94,9 +95,11 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 
 func main() {
 	verbosePtr := flag.Bool("verbose", false, "set to true if you want command line output")
-	flag.Parse() // Checks for verbose flags and relays info to workers when program starts
+	charsetPtr := flag.String("charset", "LUDC", "define characterset by using L, U, D and C")
 
-	allowedChars = getChars("LUDC")
+	flag.Parse() // Checks for verbose and charset flags and relays info to workers when program starts
+
+	allowedChars = getChars(*charsetPtr)
 
 	fmt.Print("Enter hash: ") // Writes "Enter hash: " to the command line and waits for input
 	reader := bufio.NewReader(os.Stdin)

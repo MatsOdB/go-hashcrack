@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
-	"flag"
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -20,7 +17,7 @@ const chars = "\"'|@#&-!;,?.:/%[]{}()<>\\~=+*_$ "
 var allowedChars string
 var calculations int
 
-// Returns a listOfChars that contains all of the allowed characters.
+// Returns a listOfChars that contains all the allowed characters.
 // For example: getChars("LUDC"), returns string with all lowercase letters, uppercase letters, digits and other characters
 func getChars(charPattern string) string {
 	var listOfChars string
@@ -41,14 +38,14 @@ func getChars(charPattern string) string {
 
 // Returns the i-th next sequence based on the given sequence
 func next(str string, i int) string {
-	if (len(str) <= 0) {
+	if len(str) <= 0 {
 		str += string(allowedChars[0])
 	} else {
-		str = str[:0] + string(allowedChars[(strings.Index(allowedChars, string(str[0])) + i ) % len(allowedChars)]) + str [1:] // Increases the first character of the string by 1
-		if (strings.Index(allowedChars, string(str[0])) == 0) { // Checks if the character is equal to the first character of the allowedChars string
-			ret := string(str[0]) // Stores the first value of the string
+		str = str[:0] + string(allowedChars[(strings.Index(allowedChars, string(str[0]))+i)%len(allowedChars)]) + str[1:] // Increases the first character of the string by 1
+		if strings.Index(allowedChars, string(str[0])) == 0 {                                                             // Checks if the character is equal to the first character of the allowedChars string
+			ret := string(str[0])   // Stores the first value of the string
 			nxt := next(str[1:], 1) // Preforms the next function on a slice of the full string
-			return ret + nxt // Returns the first value of current string + the next sequence of the sliced off part of the full string
+			return ret + nxt        // Returns the first value of current string + the next sequence of the sliced off part of the full string
 		}
 	}
 	return str
@@ -58,28 +55,27 @@ func next(str string, i int) string {
 func worker(workerId int, workerAmt *int, verbose bool, hash *string, result chan<- string) {
 	// Declaring necessary variables
 	var bytes [32]byte
-	var sequence string 
+	var sequence string
 
 	// Initializing sequence variable
-	sequence = next(sequence, workerId + 1)
+	sequence = next(sequence, workerId+1)
 
-
-	if (verbose) { // Checks for verbose flag
-		for { 
-			calculations += 1 // Adds 1 to calculations variable 
-			fmt.Println(sequence) // Prints every generated sequence
-			bytes = sha256.Sum256([]byte(sequence)) // Assign SHA256 sum of sequence to bytes variable
-			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
+	if verbose { // Checks for verbose flag
+		for {
+			calculations += 1                          // Adds 1 to calculations variable
+			fmt.Println(sequence)                      // Prints every generated sequence
+			bytes = sha256.Sum256([]byte(sequence))    // Assign SHA256 sum of sequence to bytes variable
+			if hex.EncodeToString(bytes[:]) == *hash { // Checks if hashes match and breaks out of for loop
 				break
 			}
 			// Generates the workerAmt-th next sequence
 			sequence = next(sequence, *workerAmt)
 		}
 	} else {
-		for { 
-			calculations += 1 // Adds 1 to calculations variable
-			bytes = sha256.Sum256([]byte(sequence)) // Assign SHA256 sum of sequence to bytes variable
-			if (hex.EncodeToString(bytes[:]) == *hash) { // Checks if hashes match and breaks out of for loop
+		for {
+			calculations += 1                          // Adds 1 to calculations variable
+			bytes = sha256.Sum256([]byte(sequence))    // Assign SHA256 sum of sequence to bytes variable
+			if hex.EncodeToString(bytes[:]) == *hash { // Checks if hashes match and breaks out of for loop
 				break
 			}
 			// Generates the workerAmt-th next sequence
@@ -87,38 +83,75 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 		}
 	}
 
-	// Print result to terminal
-	result <- sequence
+	// Send result gracefully to result channel
+	defer func() {
+		if recover() != nil {
+			return
+		}
+	}()
 
+	result <- sequence
 	close(result)
 }
 
-func main() {
-	verbosePtr := flag.Bool("verbose", false, "set to true if you want command line output")
-	charsetPtr := flag.String("charset", "LUDC", "define characterset by using L, U, D and C")
+func crack(hash string, charPattern string, workerAmt int, verbose bool) string {
+	// Declaring necessary variables
+	// Channel for getting results from workers
+	var result = make(chan string)
 
-	flag.Parse() // Checks for verbose and charset flags and relays info to workers when program starts
-
-	allowedChars = getChars(*charsetPtr)
-
-	fmt.Print("Enter hash: ") // Writes "Enter hash: " to the command line and waits for input
-	reader := bufio.NewReader(os.Stdin)
-    hash, _ := reader.ReadString('\n') // Waits for \n character
-    hash = strings.Replace(hash, "\n", "", -1) // Replace "\n" character with ""
-
-	// Declares the amount of workers
-	var workers int = 3
-
-	// Creating channels
-	result := make(chan string, 1)
+	// Initializing allowedChars variable
+	allowedChars = getChars(charPattern)
 
 	// Creating workers
-	for i := 0; i < workers; i++ {
-		go worker(i, &workers, *verbosePtr, &hash, result)
+	for i := 0; i < workerAmt; i++ {
+		go worker(i, &workerAmt, verbose, &hash, result)
 	}
-	
-	// Prints results to terminal
-	fmt.Println("Cracked hash with: " + <-result)
-	fmt.Println("Performed", calculations, "calculations to crack hash")
+
+	// Print result to terminal
+	resultStr := <-result
+	fmt.Println("Result:", resultStr)
+	return resultStr
 }
 
+// Gets the hash and charPattern from the terminal/user
+func main() {
+	// Declaring necessary variables
+	var hash string
+	var charPattern string
+	var workerAmt int
+	var verbose bool
+
+	// Getting hash from user
+	fmt.Print("Enter hash: ")
+	_, err := fmt.Scanln(&hash)
+	if err != nil {
+		return
+	}
+
+	// Getting charPattern from user
+	fmt.Print("Enter charPattern: ")
+	_, err = fmt.Scanln(&charPattern)
+	if err != nil {
+		return
+	}
+
+	// Getting workerAmt from user
+	fmt.Print("Enter workerAmt: ")
+	_, err = fmt.Scanln(&workerAmt)
+	if err != nil {
+		return
+	}
+
+	// Getting verbose from user
+	fmt.Print("Verbose? (true/false): ")
+	_, err = fmt.Scanln(&verbose)
+	if err != nil {
+		return
+	}
+
+	// Cracking the hash
+	crack(hash, charPattern, workerAmt, verbose)
+
+	// Print calculations to terminal
+	fmt.Println("Calculations:", calculations)
+}

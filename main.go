@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"strings"
 )
@@ -117,9 +118,14 @@ func crack(hash string, charPattern string, workerAmt int, verbose bool) string 
 func main() {
 	// Declaring necessary variables
 	var hash string
-	var charPattern string
-	var workerAmt int
-	var verbose bool
+
+	// Get variable values from terminal flags and save them to designated variables
+	verbose := flag.Bool("verbose", false, "Prints every generated sequence")
+	charPattern := flag.String("charPattern", "LUDC", "Specifies which characters to use. L = lowercase, U = uppercase, D = digits, C = other characters")
+	workerAmt := flag.Int("workerAmt", 3, "Specifies the amount of workers to use")
+
+	// Parse flags
+	flag.Parse()
 
 	// Getting hash from user
 	fmt.Print("Enter hash: ")
@@ -128,29 +134,8 @@ func main() {
 		return
 	}
 
-	// Getting charPattern from user
-	fmt.Print("Enter charPattern: ")
-	_, err = fmt.Scanln(&charPattern)
-	if err != nil {
-		return
-	}
-
-	// Getting workerAmt from user
-	fmt.Print("Enter workerAmt: ")
-	_, err = fmt.Scanln(&workerAmt)
-	if err != nil {
-		return
-	}
-
-	// Getting verbose from user
-	fmt.Print("Verbose? (true/false): ")
-	_, err = fmt.Scanln(&verbose)
-	if err != nil {
-		return
-	}
-
 	// Cracking the hash
-	crack(hash, charPattern, workerAmt, verbose)
+	crack(hash, *charPattern, *workerAmt, *verbose)
 
 	// Print calculations to terminal
 	fmt.Println("Calculations:", calculations)

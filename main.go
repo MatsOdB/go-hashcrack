@@ -40,10 +40,14 @@ func getChars(charPattern string) string {
 // Returns the i-th next sequence based on the given sequence
 func next(str string, i int) string {
 	if len(str) <= 0 {
-		str += string(allowedChars[0])
+		str += string(allowedChars[i])
 	} else {
-		str = str[:0] + string(allowedChars[(strings.Index(allowedChars, string(str[0]))+i)%len(allowedChars)]) + str[1:] // Increases the first character of the string by 1
-		if strings.Index(allowedChars, string(str[0])) == 0 {                                                             // Checks if the character is equal to the first character of the allowedChars string
+		index := strings.Index(allowedChars, string(str[0])) + i
+		if index >= len(allowedChars) {
+			index = index - len(allowedChars)
+		}
+		str = str[:0] + string(allowedChars[index]) + str[1:] // Increases the first character of the string by 1
+		if strings.Index(allowedChars, string(str[0])) == 0 { // Checks if the character is equal to the first character of the allowedChars string
 			ret := string(str[0])   // Stores the first value of the string
 			nxt := next(str[1:], 1) // Preforms the next function on a slice of the full string
 			return ret + nxt        // Returns the first value of current string + the next sequence of the sliced off part of the full string
@@ -59,7 +63,7 @@ func worker(workerId int, workerAmt *int, verbose bool, hash *string, result cha
 	var sequence string
 
 	// Initializing sequence variable
-	sequence = next(sequence, workerId+1)
+	sequence = next(sequence, workerId)
 
 	if verbose { // Checks for verbose flag
 		for {
